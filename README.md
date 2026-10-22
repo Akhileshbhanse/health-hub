@@ -1,51 +1,35 @@
 # HealthHub
 
-HealthHub is a full-stack health and hygiene platform. The Next.js frontend
-uses Supabase Auth and Storage, while the Express API provides authenticated
-REST endpoints for tips, uploads, and personalized recommendations.
+HealthHub is a small Next.js app for Supabase Authentication: sign up, confirm
+an email, log in, reset a password, and log out. The frontend talks directly
+to Supabase Auth; there is no custom API or service-role key in this project.
 
 ## Stack
 
-- **Frontend:** Next.js 14 App Router, React, TypeScript, TailwindCSS
-- **Backend:** Node.js 20, Express, TypeScript, Multer
-- **Data and auth:** Supabase PostgreSQL, Auth, and Storage
-- **Deployment:** Vercel (frontend), Render/Heroku (backend), or Docker Compose
-
-## Project structure
-
-```text
-health hub/
-├── frontend/                 # Next.js application
-│   ├── src/app/              # Home, tips, dashboard, uploads, auth
-│   ├── src/components/       # Shared navigation, footer, and cards
-│   └── src/lib/              # Supabase and API clients
-├── backend/                  # Express REST API
-│   └── src/
-│       ├── middleware/       # Bearer-token authentication
-│       ├── config.ts
-│       ├── server.ts
-│       └── supabase.ts
-├── database/schema.sql       # Tables, RLS, seed tips, and storage policies
-├── docker-compose.yml
-└── README.md
-```
+- Next.js 14 App Router, React, TypeScript, and TailwindCSS
+- Supabase Auth via `@supabase/supabase-js`
+- Docker Compose for the frontend container
 
 ## Supabase setup
 
-1. Create a project at [supabase.com](https://supabase.com).
-2. Copy the project URL, anon key, and service-role key from **Project
-   Settings → API**.
-3. Run [`database/schema.sql`](./database/schema.sql) in the Supabase SQL
-   Editor. It creates the profile, tips, uploads, and recommendations tables,
-   RLS policies, the `uploads` storage bucket, and sample tips.
-4. Keep `SUPABASE_SERVICE_ROLE_KEY` server-only. Never expose it through
-   `NEXT_PUBLIC_*` variables or commit it.
-5. In Auth settings, configure the email confirmation behavior and allowed
-   redirect URLs for your frontend.
+1. Create a Supabase project.
+2. Copy the project URL and anon key into `frontend/.env.local`:
+
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+   ```
+
+3. Configure email confirmation in **Authentication → Providers → Email**.
+4. Add these URLs in **Authentication → URL Configuration**:
+   - `http://localhost:3000`
+   - `http://localhost:3000/auth/reset-password`
+   - Your deployed app origin and `/auth/reset-password` equivalent.
+
+The optional [database/schema.sql](./database/schema.sql) creates a minimal
+profile table. Supabase Auth itself does not require any project table.
 
 ## Local development
-
-### Frontend
 
 ```bash
 cd frontend
@@ -54,96 +38,15 @@ npm install
 npm run dev
 ```
 
-Set these values in `frontend/.env.local`:
+Open `http://localhost:3000`.
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-NEXT_PUBLIC_API_URL=http://localhost:4000
-```
-
-### Backend
+## Production build
 
 ```bash
-cd backend
-copy .env.example .env
+cd frontend
 npm install
-npm run dev
+npm run build
 ```
 
-Set the Supabase values in `backend/.env`. The backend listens on
-`http://localhost:4000` and exposes `GET /health`.
-
-## REST API
-
-All protected routes expect `Authorization: Bearer <supabase-access-token>`.
-
-| Method | Endpoint | Auth | Purpose |
-| --- | --- | --- | --- |
-| GET | `/health` | No | API health check |
-| POST | `/api/auth/register` | No | Register with Supabase Auth |
-| POST | `/api/auth/login` | No | Login with Supabase Auth |
-| GET | `/api/tips` | No | List tips; optional `?category=` |
-| GET | `/api/tips/:id` | No | Read one tip |
-| GET | `/api/uploads` | Yes | List the current user's uploads |
-| POST | `/api/uploads` | Yes | Multipart upload (`file`, optional `description`) |
-| DELETE | `/api/uploads/:id` | Yes | Delete an owned upload and storage object |
-| GET | `/api/recommendations` | Yes | List current-user recommendations |
-| POST | `/api/recommendations/generate` | Yes | Create a rule-based recommendation |
-| POST | `/api/ai/analyze` | Yes | Reserved AI analysis placeholder (501) |
-
-The recommendation endpoint intentionally uses dummy rule-based logic for now.
-The AI endpoint is a safe integration seam for a future image/report analysis
-provider and does not claim to provide medical advice.
-
-## Docker Compose
-
-Create `backend/.env`, then create a root `.env` containing the public frontend
-values:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-NEXT_PUBLIC_API_URL=http://localhost:4000
-```
-
-Start both services from the project root:
-
-```bash
-docker compose up --build
-```
-
-- Frontend: `http://localhost:3000`
-- Backend: `http://localhost:4000`
-
-## Deployment
-
-### Vercel
-
-Create a Vercel project with `frontend` as the root directory. Add
-`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and the deployed
-backend URL as `NEXT_PUBLIC_API_URL`.
-
-### Render or Heroku
-
-Deploy `backend` as a Node service:
-
-```text
-Build command: npm ci && npm run build
-Start command: npm start
-```
-
-Configure `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
-`SUPABASE_SERVICE_ROLE_KEY`, `FRONTEND_URL`, and
-`SUPABASE_STORAGE_BUCKET`. Set `FRONTEND_URL` to the exact deployed frontend
-origin so CORS remains restricted.
-
-## Validation
-
-```bash
-cd backend && npm run typecheck
-cd ../frontend && npm run build
-```
-
-HealthHub provides educational hygiene information and is not a substitute for
-professional medical diagnosis or treatment.
+HealthHub provides general information and is not a substitute for
+professional medical advice.

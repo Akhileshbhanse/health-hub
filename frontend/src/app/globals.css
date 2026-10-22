@@ -2,32 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 255, 255, 255;
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 15, 23, 42;
-    --background-end-rgb: 15, 23, 42;
-  }
-}
+:root { color-scheme: light; }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background: #f7f7f2;
+  color: #40513b;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+@layer components {
+  .glass-card {
+    @apply rounded-3xl border border-white/40 bg-white/30 shadow-lg shadow-brand-leaf/10 backdrop-blur-xl;
   }
+
+  .primary-button {
+    @apply inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-brand-mint to-brand-leaf px-6 py-3 font-semibold text-white shadow-md shadow-brand-leaf/20 transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-brand-forest focus:ring-offset-2 focus:ring-offset-brand-cream disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .secondary-button {
+    @apply inline-flex items-center justify-center rounded-xl border border-brand-leaf/40 bg-white/40 px-4 py-2 font-semibold text-brand-forest transition hover:-translate-y-0.5 hover:bg-white/60 focus:outline-none focus:ring-2 focus:ring-brand-leaf focus:ring-offset-2 focus:ring-offset-brand-cream;
+  }
+
+  .nav-link {
+    @apply font-medium text-brand-body transition hover:text-brand-forest focus:outline-none focus:ring-2 focus:ring-brand-leaf;
+  }
+
+  .input-field {
+    @apply w-full rounded-xl border border-white/60 bg-white/50 px-4 py-3 text-brand-forest placeholder:text-brand-body/60 backdrop-blur focus:border-brand-leaf focus:outline-none focus:ring-2 focus:ring-brand-leaf/50;
+  }
+
+  .field-label {
+    @apply block text-sm font-semibold text-brand-forest;
+  }
+}
+
+.ambient-blob {
+  @apply pointer-events-none fixed z-0 h-72 w-72 rounded-full blur-3xl;
+}
+
+.blob-one { left: -8rem; top: 8rem; background: #b7e4c7; opacity: .55; }
+.blob-two { right: -8rem; top: 25%; background: #95d5b2; opacity: .45; }
+.blob-three { bottom: -10rem; left: 35%; background: #d8f3dc; opacity: .8; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }

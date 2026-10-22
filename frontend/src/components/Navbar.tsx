@@ -1,100 +1,45 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from './AuthProvider'
 
 export default function Navbar() {
-  const [user, setUser] = useState<any>(null)
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-    })
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
+  const router = useRouter()
+  const { user, loading } = useAuth()
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    window.location.href = '/'
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      console.error('Unable to sign out.', error)
+      return
+    }
+    router.push('/auth/login')
   }
 
   return (
-    <nav className="bg-white dark:bg-gray-800 shadow-md">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
-          <Link href="/" className="text-2xl font-bold text-primary-600">
-            🏥 HealthHub
-          </Link>
-
-          <div className="hidden md:flex items-center space-x-6">
-            <Link
-              href="/"
-              className="text-gray-700 dark:text-gray-300 hover:text-primary-600 transition"
-            >
-              Home
-            </Link>
-            <Link
-              href="/tips"
-              className="text-gray-700 dark:text-gray-300 hover:text-primary-600 transition"
-            >
-              Tips
-            </Link>
-            {user && (
-              <>
-                <Link
-                  href="/dashboard"
-                  className="text-gray-700 dark:text-gray-300 hover:text-primary-600 transition"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/upload"
-                  className="text-gray-700 dark:text-gray-300 hover:text-primary-600 transition"
-                >
-                  Upload
-                </Link>
-              </>
-            )}
-          </div>
-
-          <div className="flex items-center space-x-4">
-            {user ? (
-              <>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  {user.email}
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/auth/login"
-                  className="text-gray-700 dark:text-gray-300 hover:text-primary-600 transition"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/auth/signup"
-                  className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition"
-                >
-                  Sign Up
-                </Link>
-              </>
-            )}
-          </div>
+    <nav className="sticky top-0 z-20 px-4 py-4 sm:px-6">
+      <div className="glass-card mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+        <Link href="/" className="text-xl font-bold tracking-tight text-brand-forest">
+          <span className="mr-2 text-brand-leaf" aria-hidden="true">✦</span>
+          HealthHub
+        </Link>
+        <div className="flex items-center gap-3 sm:gap-6">
+          <Link href="/" className="nav-link hidden sm:inline">Home</Link>
+          {!loading && user ? (
+            <>
+              <Link href="/account" className="nav-link">Account</Link>
+              <button type="button" onClick={handleLogout} className="secondary-button">
+                Log out
+              </button>
+            </>
+          ) : !loading ? (
+            <>
+              <Link href="/auth/login" className="nav-link">Log in</Link>
+              <Link href="/auth/signup" className="primary-button px-4 py-2 text-sm">Sign up</Link>
+            </>
+          ) : null}
         </div>
       </div>
     </nav>
