@@ -6,3 +6,4 @@ dist/
 backend/.env
 frontend/.env.local
 npm-debug.log*
+*.tsbuildinfo

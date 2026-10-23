@@ -2,8 +2,11 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { AuthShell, Feedback } from '@/components/AuthShell'
 import PasswordInput from '@/components/PasswordInput'
+import { useAuth } from '@/components/AuthProvider'
 import { supabase } from '@/lib/supabase'
 
 function passwordScore(password: string) {
@@ -11,6 +14,8 @@ function passwordScore(password: string) {
 }
 
 export default function SignupPage() {
+  const router = useRouter()
+  const { user, loading: sessionLoading } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -19,6 +24,12 @@ export default function SignupPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const score = useMemo(() => passwordScore(password), [password])
+
+  useEffect(() => {
+    if (!sessionLoading && user) {
+      router.replace('/account')
+    }
+  }, [router, sessionLoading, user])
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -30,7 +41,10 @@ export default function SignupPage() {
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } },
+      options: {
+        data: { name: name.trim() },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     })
     if (signUpError) setError(signUpError.message || 'We could not create your account.')
     else setMessage('Your account is ready. Check your email to confirm your address before logging in.')
@@ -41,7 +55,6 @@ export default function SignupPage() {
     <AuthShell title="Create your account" description="A simple, secure place to manage your HealthHub access.">
       <form onSubmit={handleSubmit} className="space-y-5">
         {error && <Feedback tone="error">{error}</Feedback>}
-        {message && <Feedback tone="success">{message}</Feedback>}
         <label className="field-label" htmlFor="name">Name
           <div className="relative mt-2"><span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-brand-leaf" aria-hidden="true">◦</span><input id="name" value={name} onChange={(e) => setName(e.target.value)} className="input-field pl-10" placeholder="Your name" autoComplete="name" required /></div>
         </label>
@@ -62,6 +75,7 @@ export default function SignupPage() {
         </label>
         <button type="submit" disabled={loading} className="primary-button w-full">{loading ? 'Creating account...' : 'Sign up'}</button>
       </form>
+      {message && <div className="mt-5"><Feedback tone="success">{message}</Feedback></div>}
       <p className="mt-6 text-center text-sm text-brand-body">Already have an account? <Link href="/auth/login" className="font-semibold text-brand-forest hover:underline">Log in</Link></p>
     </AuthShell>
   )

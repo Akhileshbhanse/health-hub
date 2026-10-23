@@ -1,10 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AuthShell, Feedback } from '@/components/AuthShell'
 import PasswordInput from '@/components/PasswordInput'
+import { useAuth } from '@/components/AuthProvider'
 import { supabase } from '@/lib/supabase'
 
 function friendlyError(message: string) {
@@ -20,6 +21,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const { user, loading: sessionLoading } = useAuth()
+
+  useEffect(() => {
+    if (!sessionLoading && user) {
+      router.replace('/account')
+    }
+  }, [router, sessionLoading, user])
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -27,7 +35,10 @@ export default function LoginPage() {
     setError('')
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
     if (signInError) setError(friendlyError(signInError.message))
-    else router.push('/')
+    else {
+      router.push('/account')
+      router.refresh()
+    }
     setLoading(false)
   }
 
